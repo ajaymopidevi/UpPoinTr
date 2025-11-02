@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
-# @Author: Haozhe Xie
-# @Date:   2019-12-10 10:38:01
+# @Author: Ajay Narasimha Mopidevi
+# @Date:   2025-11-01 20:54:24
+# @Email: ajaynmopidevi@gmail.com
+# Adapted from Haozhe Xie Version 2.0.0
+
+# Previous Version
 # @Last Modified by:   Haozhe Xie
-# @Last Modified time: 2019-12-26 14:21:36
+# @Last Modified time: 2019-12-10 10:04:25
 # @Email:  cshzxie@gmail.com
 #
 # Note:
