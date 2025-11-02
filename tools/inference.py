@@ -1,12 +1,14 @@
 ##############################################################
-# % Author: Castle
-# % Date:14/01/2023
+# % Author: Ajay Narasimha Mopidevi
+# % Date:01/11/2025
 ###############################################################
 import argparse
 import os
 import numpy as np
 import cv2
 import sys
+import open3d as o3d
+import time
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(BASE_DIR, '../'))
 
@@ -63,7 +65,8 @@ def inference_single_ColoRadar(model, pc_path, args, config, root=None):
     
     centroid = pc_ndarray[0]
     pc_ndarray = pc_ndarray - centroid
-    m = np.max(np.sqrt(np.sum(pc_ndarray**2, axis=1)))
+    # m = np.max(np.sqrt(np.sum(pc_ndarray**2, axis=1)))
+    m = 25
     pc_ndarray = pc_ndarray / m
 
     transform = Compose([{
@@ -74,21 +77,21 @@ def inference_single_ColoRadar(model, pc_path, args, config, root=None):
     pc_ndarray_normalized = transform({'input': pc_ndarray})
     # inference
     ret = model(pc_ndarray_normalized['input'].unsqueeze(0).to(args.device.lower()))
-    dense_points = ret[-1].squeeze(0).detach().cpu().numpy()
+    fine_points = ret[-1].squeeze(0).detach().cpu().numpy()
 
     # denormalize it to adapt for the original input
-    dense_points = dense_points * m
-    dense_points = dense_points + centroid
+    fine_points = fine_points * m
+    fine_points = fine_points + centroid
 
     if args.out_pc_root != '':
         target_path = os.path.join(args.out_pc_root, os.path.splitext(pc_path)[0])
         fine_pcd = o3d.geometry.PointCloud()
-        fine_pcd.points = o3d.utility.Vector3dVector(np.array(dense_points))
-        o3d.io.write_point_cloud(target_path+ '_fine.pcd', dense_pcd, True, True)
+        fine_pcd.points = o3d.utility.Vector3dVector(np.array(fine_points))
+        o3d.io.write_point_cloud(target_path+ '_fine.pcd', fine_pcd, True, True)
         
         if args.save_vis_img:
             input_img = misc.get_ptcloud_img(pc_ndarray_normalized['input'].numpy())
-            dense_img = misc.get_ptcloud_img(dense_points)
+            dense_img = misc.get_ptcloud_img(fine_points)
             cv2.imwrite(os.path.join(target_path, '_input.jpg'), input_img)
             cv2.imwrite(os.path.join(target_path, '_fine.jpg'), dense_img)
     
@@ -157,16 +160,24 @@ def main():
 
     if args.pc_root != '':
         pc_file_list = os.listdir(args.pc_root)
+        if args.out_pc_root != '':
+            os.makedirs(args.out_pc_root, exist_ok=True)
+        start = time.time()
         for pc_file in pc_file_list:
             if config.dataset.train._base_['NAME'] == 'ColoRadar':
                 inference_single_ColoRadar(base_model, pc_file, args, config, root=args.pc_root)
             else:
                 inference_single(base_model, pc_file, args, config, root=args.pc_root)
+        end = time.time()
+        print("Runtime:", (end-start)*(10**3), " ms")
     else:
+        start = time.time()
         if config.dataset.train._base_['NAME'] == 'ColoRadar':
             inference_single_ColoRadar(base_model, args.pc, args, config)
         else:
             inference_single(base_model, args.pc, args, config)
+        end = time.time()
+        print("Runtime:", (end-start)*(10**3), " ms")
 
 if __name__ == '__main__':
     main()

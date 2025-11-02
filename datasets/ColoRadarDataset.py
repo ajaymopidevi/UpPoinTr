@@ -56,10 +56,12 @@ class ColoRadar(data.Dataset):
 
     def pc_norm(self, input, gt):
         """ pc: NxC, return NxC """
-        centroid = np.mean(gt, axis=0)
+        # Based on patch creation, centroid is 1st point
+        # All points within a fixed distance are considered
+        # Fixed distance ensures normalization without any externals points from GT
+        centroid = input[0]
         gt = gt - centroid
-        #2x just to get most of input in bound
-        m = 2*np.max(np.sqrt(np.sum(gt**2, axis=1)))
+        m = 25.0
         gt = gt / m
         input = input - centroid
         input = input/m

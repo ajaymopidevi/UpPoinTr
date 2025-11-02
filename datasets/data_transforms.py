@@ -105,7 +105,19 @@ class RandomMirrorPoints(object):
 
         ptcloud[:, :3] = np.dot(ptcloud[:, :3], trfm_mat.T)
         return ptcloud
+    
+class RandomGaussianNoise(object):
+    def __init__(self, parameters):
+        self.mean = np.array(parameters['mean'])
+        self.std = np.array(parameters['std'])
 
+    def __call__(self, ptcloud):
+        # angles = np.random.uniform(size=(3)) * 2 * np.pi
+        bsize = ptcloud.shape
+        jittered_data = np.random.normal(self.mean, self.std, bsize)
+        ptcloud += jittered_data
+                                                                                
+        return ptcloud
 
 class NormalizeObjectPose(object):
     def __init__(self, parameters):
